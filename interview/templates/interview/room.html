@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interview in progress</title>
+  <link rel="stylesheet" href="{% static 'interview/css/room.css' %}">
+</head>
+<body>
+<div id="app"
+     data-answer-url="{% url 'interview:answer' interview.uid %}"
+     data-event-url="{% url 'interview:event' interview.uid %}"
+     data-csrf="{{ csrf_token }}"
+     data-total="{{ interview.max_questions }}"
+     data-number="{{ question.order }}"
+     data-transcribe-url="{% url 'interview:transcribe' interview.uid %}">
+
+  <header class="topbar">
+    <strong>AI Interview</strong>
+    <span id="progress">Question {{ question.order }} / {{ interview.max_questions }}</span>
+    <span id="warnBadge" class="pill">Tab warnings: {{ interview.tab_warnings }}/2</span>
+  </header>
+
+  <main class="layout">
+    <section class="panel chat">
+      <div id="log" class="log" aria-live="polite"></div>
+      <div class="composer">
+        <textarea id="answer" rows="4" placeholder="Type your answer, or press Speak and talk..." disabled></textarea>
+        <div class="controls">
+          <button id="micBtn" type="button" class="btn" disabled>🎤 Speak</button>
+          <span id="aiState" class="hint">Waiting to start...</span>
+          <button id="sendBtn" type="button" class="btn primary" disabled>Submit answer</button>
+        </div>
+        <p class="hint small">Tip: stop the mic before editing the text. Ctrl+Enter submits.</p>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="video-wrap">
+        <video id="cam" autoplay muted playsinline></video>
+        <div id="faceBadge" class="badge">Camera off</div>
+      </div>
+      <ul class="rules">
+        <li>Keep your face visible and alone in frame.</li>
+        <li>Switching tabs: 1st is a warning, 2nd ends the interview.</li>
+      </ul>
+    </aside>
+  </main>
+
+  <div id="precheck" class="overlay">
+    <div class="modal">
+      <h2>Before you start</h2>
+      <p>We need your camera and microphone. Make sure your face is clearly visible.</p>
+      <video id="camPre" class="hidden" autoplay muted playsinline></video>
+      <ul class="checks">
+        <li id="chkMedia">Camera and microphone: <span>not checked</span></li>
+        <li id="chkFace">Face detection: <span>waiting</span></li>
+      </ul>
+      <p id="precheckErr" class="err"></p>
+      <button id="enableBtn" type="button" class="btn">Enable camera and mic</button>
+      <button id="startBtn" type="button" class="btn primary" disabled>Start interview</button>
+    </div>
+  </div>
+
+  <div id="warnModal" class="overlay hidden">
+    <div class="modal warn">
+      <h2>⚠️ Warning 1 of 2</h2>
+      <p>You switched tabs. The next switch will end your interview.</p>
+      <button id="warnOk" type="button" class="btn primary">I understand</button>
+    </div>
+  </div>
+</div>
+
+{{ question.text|json_script:"first-question" }}
+<script type="module" src="{% static 'interview/js/room.js' %}"></script>
+</body>
+</html>

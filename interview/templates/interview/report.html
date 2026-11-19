@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interview report</title>
+  <link rel="stylesheet" href="{% static 'interview/css/report.css' %}">
+</head>
+<body>
+<div class="wrap">
+  <h1>Interview report</h1>
+
+  {% if interview.status == "terminated" %}
+    <div class="notice">The interview ended early because you switched tabs twice. Your score covers the answers given so far.</div>
+  {% endif %}
+
+  <section class="card score-card">
+    <div class="score">{{ interview.final_score|floatformat:0 }}<span>/100</span></div>
+    <div class="breakdown">
+      Answer quality: {{ interview.summary.base_score }} &minus; Integrity penalty: {{ interview.summary.integrity_penalty }}
+    </div>
+    {% if interview.summary.verdict %}<p class="verdict">{{ interview.summary.verdict }}</p>{% endif %}
+  </section>
+
+  <section class="two-col">
+    <div class="card">
+      <h2>Strengths</h2>
+      <ul>{% for s in interview.summary.strengths %}<li>{{ s }}</li>{% empty %}<li>Not enough data.</li>{% endfor %}</ul>
+    </div>
+    <div class="card">
+      <h2>Areas to improve</h2>
+      <ul>{% for w in interview.summary.weaknesses %}<li>{{ w }}</li>{% empty %}<li>Not enough data.</li>{% endfor %}</ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Proctoring log</h2>
+    <div class="stats">
+      <div><strong>{{ events.tab_switch }}</strong><span>Tab switches</span></div>
+      <div><strong>{{ events.no_face }}</strong><span>No face</span></div>
+      <div><strong>{{ events.multi_face }}</strong><span>Multiple faces</span></div>
+    </div>
+  </section>
+
+  <h2>Question by question</h2>
+  {% for q in questions %}
+    <section class="card qa">
+      <div class="qa-head">
+        <span class="tag">{{ q.get_mode_display }}</span>
+        <span class="tag">{{ q.answer.input_mode }}</span>
+        <span class="mark">{{ q.answer.score }}/10</span>
+      </div>
+      <p class="q">{{ q.order }}. {{ q.text }}</p>
+      <p class="a">{{ q.answer.text }}</p>
+      {% if q.answer.feedback %}<p class="fb">{{ q.answer.feedback }}</p>{% endif %}
+    </section>
+  {% empty %}
+    <p class="muted">No answers were recorded.</p>
+  {% endfor %}
+
+  <a class="btn" href="{% url 'interview:start' %}">Start a new interview</a>
+</div>
+</body>
+</html>

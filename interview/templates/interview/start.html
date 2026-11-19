@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Interview</title>
+  <link rel="stylesheet" href="{% static 'interview/css/start.css' %}">
+</head>
+<body>
+  <div class="card">
+    <h1>AI Interview</h1>
+    <p class="sub">Upload your resume to begin a live, adaptive interview.</p>
+
+    <form method="post" enctype="multipart/form-data" id="startForm">
+      {% csrf_token %}
+      {% for e in form.non_field_errors %}<div class="err">{{ e }}</div>{% endfor %}
+
+      <label for="{{ form.resume.id_for_label }}">{{ form.resume.label }}</label>
+      {{ form.resume }}
+      {% for e in form.resume.errors %}<div class="err">{{ e }}</div>{% endfor %}
+
+      <label for="{{ form.jd_text.id_for_label }}">{{ form.jd_text.label }}</label>
+      {{ form.jd_text }}
+
+      <button type="submit" id="btn">Start interview</button>
+    </form>
+
+    <ul class="rules">
+      <li>Camera and microphone access are required.</li>
+      <li>Keep your face visible throughout.</li>
+      <li>Switching tabs: 1st time is a warning, 2nd ends the interview.</li>
+    </ul>
+  </div>
+
+  <script src="{% static 'interview/js/start.js' %}"></script>
+</body>
+</html>
