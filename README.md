@@ -127,11 +127,6 @@ Only share the link with your team, and stop the tunnel when you are done.
 - Tab-switch detection uses the Page Visibility API, so it does not catch every case of working in another window that stays visible next to the browser.
 - Designed for Chrome and Edge.
 
-## Team
+## Project Author
 
-- Manas Vinodrao Mehakare
-- Aditya Atul Dudhanale
-- Mohammad Ounais Ovais Saudagar
-- Mohammed Jalil Kurupkar
-
-Guided by **Vaibhav Sawalkar**.
+**Manas Mehakare**
