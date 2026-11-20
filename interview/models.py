@@ -8,13 +8,13 @@ class Interview(models.Model):
     uid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     resume = models.FileField(upload_to="resumes/")
     resume_text = models.TextField(blank=True)
-    jd_text = models.TextField(blank=True)          # optional
+    jd_text = models.TextField(blank=True)
     status = models.CharField(max_length=12, choices=STATUS, default="active")
     covered_topics = models.JSONField(default=list)
     max_questions = models.PositiveSmallIntegerField(default=7)
     tab_warnings = models.PositiveSmallIntegerField(default=0)
     final_score = models.FloatField(null=True, blank=True)
-    summary = models.JSONField(null=True, blank=True)   # strengths / weaknesses
+    summary = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -39,10 +39,10 @@ class Question(models.Model):
 class Answer(models.Model):
     question = models.OneToOneField(Question, on_delete=models.CASCADE, related_name="answer")
     text = models.TextField()
-    input_mode = models.CharField(max_length=5, default="typed")   # typed / voice
-    relevance = models.FloatField(null=True)    # 0-10
-    depth = models.FloatField(null=True)        # 0-10
-    clarity = models.FloatField(null=True)      # 0-10
+    input_mode = models.CharField(max_length=5, default="typed") 
+    relevance = models.FloatField(null=True)  
+    depth = models.FloatField(null=True)       
+    clarity = models.FloatField(null=True)
     feedback = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

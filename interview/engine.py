@@ -7,6 +7,7 @@ from django.conf import settings
 from groq import Groq
 
 from .models import Answer, Question
+from .scoring import RUBRIC, grade_answer
 
 client = Groq(api_key=settings.GROQ_API_KEY)
 MODEL = getattr(settings, "GROQ_MODEL", "llama-3.3-70b-versatile")
@@ -37,10 +38,10 @@ def extract_resume_text(path: str) -> str:
 
 
 # ---------- LLM helper ----------
-def _llm_json(user_prompt: str) -> dict:
+def _llm_json(user_prompt: str, temperature: float = 0.7) -> dict:
     r = client.chat.completions.create(
         model=MODEL,
-        temperature=0.7,
+        temperature=temperature,
         response_format={"type": "json_object"},
         messages=[{"role": "system", "content": SYSTEM},
                   {"role": "user", "content": user_prompt}],
@@ -65,9 +66,9 @@ def _history(interview, n=4) -> str:
 def choose_mode(interview, last_answer: str) -> str:
     recent = list(interview.questions.order_by("-order").values_list("mode", flat=True)[:2])
     if recent[:2] == ["follow_up", "follow_up"]:
-        return "new_topic"                        # avoid looping on one topic
+        return "new_topic"                      
     if len(last_answer.split()) < 15:
-        return "follow_up"                        # weak/short answer -> probe
+        return "follow_up"                       
     if interview.jd_text and random.random() < 0.15:
         return "jd_gap"
     return random.choices(["follow_up", "new_topic"], weights=[60, 40])[0]
@@ -107,22 +108,26 @@ def process_answer(interview, question: Question, text: str, input_mode="typed")
         _context(interview)
         + f"\nRECENT CONVERSATION:\n{_history(interview)}\n\n"
         + f"CURRENT QUESTION: {question.text}\nCANDIDATE ANSWER: {text}\n\n"
-        + "Score the answer 0-10 on relevance, depth, clarity. Feedback: one short sentence.\n"
+        + RUBRIC
     )
     if is_last:
-        prompt += 'This was the final question. Return JSON: {"relevance": n, "depth": n, "clarity": n, "feedback": str}'
+        prompt += '\n\nThis was the final question. Return JSON: {"relevance": n, "depth": n, "clarity": n, "feedback": str}'
     else:
         prompt += (
-            f"NEXT QUESTION MODE: {mode} - {MODE_HINTS[mode]}\n"
+            f"\n\nNEXT QUESTION MODE: {mode} - {MODE_HINTS[mode]}\n"
             'Return JSON: {"relevance": n, "depth": n, "clarity": n, "feedback": str, '
             '"question": str, "topic": str}'
         )
 
-    data = _llm_json(prompt)
+    data = _llm_json(prompt, temperature=0.3)
+    if not is_last and not str(data.get("question") or "").strip():
+        raise ValueError("LLM returned no question")
+
+    g = grade_answer(text, data)
     Answer.objects.create(
         question=question, text=text, input_mode=input_mode,
-        relevance=data.get("relevance"), depth=data.get("depth"),
-        clarity=data.get("clarity"), feedback=data.get("feedback", ""),
+        relevance=g["relevance"], depth=g["depth"],
+        clarity=g["clarity"], feedback=g["feedback"],
     )
     if is_last:
         return None
